@@ -1,13 +1,15 @@
 # Deployer
 
-###
+Deploy dokku application using GitHub Deployments
 
 1. Listen to new GitHub deployments
 2. Create pending GitHub deployment status and empty Gist
-3. Deploy application to dokku and update Gist
-4. Create success/failure Github deployment status
+3. Deploy application to dokku
+4. Create success/failure Github deployment status and update Gist
 5. Sleep
 6. Go to step #1
+
+Make sure to run `deployer` as `dokku` user.
 
 ## Usage
 

@@ -9,6 +9,7 @@ import "time"
 import "errors"
 import "bytes"
 import "io"
+import "log"
 import "github.com/google/go-github/github"
 
 func main() {
@@ -31,21 +32,21 @@ func main() {
 
 	fmt.Println(*username, *password, *org, *repo, *env, *app)
 
+	sleepDuration := time.Duration(*sleepInt) * time.Second
+	fmt.Printf("Sleep duration: %v\n", sleepDuration)
+
 	repoPath := "." + *app;
 	_, err := os.Stat(repoPath)
 	if err != nil {
 		repoURL := "https://" + *username + ":" + *password + "@github.com/" + *org + "/" + *repo + ".git"
 		err = cloneRepo(repoURL, repoPath)
 		if err != nil {
-			fmt.Printf("Problem cloning repo %v\n", err)
+			log.Printf("Problem cloning repo %v\n", err)
 			os.Exit(1)
 		}
 	}
 
 	addRepoDokkuRemote(repoPath, *app)
-
-	sleepDuration := time.Duration(*sleepInt) * time.Second
-	fmt.Printf("Sleep duration: %v\n", sleepDuration)
 
 	ctx := context.Background()
 	tp := github.BasicAuthTransport{
@@ -59,16 +60,16 @@ func main() {
 		deployment, _, err := getDeployment(ctx, client, *org, *repo, *env)
 
 		if err != nil {
-			fmt.Printf("Problem in getting deployment %v\n", err)
+			log.Printf("Problem in getting deployment %v\n", err)
 			sleep(sleepDuration)
 			continue
 		}
 
-		fmt.Println(*deployment.ID, *deployment.Ref, *deployment.Environment)
+		log.Println(*deployment.ID, *deployment.Ref, *deployment.Environment)
 
 		err = fetchRepo(repoPath)
 		if err != nil {
-			fmt.Printf("Problem in fetching repo %v\n", err)
+			log.Printf("Problem in fetching repo %v\n", err)
 			sleep(sleepDuration)
 			continue
 		}
@@ -76,12 +77,12 @@ func main() {
 		gist, _, err := createDeploymentGist(ctx, client, deployment)
 
 		if err != nil {
-			fmt.Printf("Problem in creating gist %v\n", err)
+			log.Printf("Problem in creating gist %v\n", err)
 			sleep(sleepDuration)
 			continue
 		}
 
-		fmt.Println(*gist.HTMLURL)
+		log.Println("Gist", *gist.HTMLURL)
 
 		createDeploymentStatus(ctx, client, deployment, *org, *repo, "pending", *gist.HTMLURL)
 
@@ -91,7 +92,7 @@ func main() {
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Run()
 		if err != nil {
-			fmt.Printf("Problem in deploying to dokku %v\n", err)
+			log.Printf("Problem in deploying to dokku %v\n", err)
 			createDeploymentStatus(ctx, client, deployment, *org, *repo, "error", *gist.HTMLURL)
 			updateDeploymentGist(ctx, client, gist, output.String())
 			sleep(sleepDuration)
@@ -106,12 +107,12 @@ func main() {
 }
 
 func sleep(duration time.Duration) {
-	fmt.Printf("Sleeping %v\n", duration)
+	log.Printf("Sleeping %v\n", duration)
 	time.Sleep(duration)
 }
 
 func cloneRepo(repoURL string, repoPath string) (error) {
-	fmt.Println("Cloning repo ", repoURL)
+	log.Println("Cloning repo ", repoURL)
 	cmd := exec.Command("git", "clone", repoURL, repoPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -120,8 +121,8 @@ func cloneRepo(repoURL string, repoPath string) (error) {
 }
 
 func addRepoDokkuRemote(repoPath string, app string) (error) {
-	fmt.Println("Adding repo dokku remote ", repoPath, app)
-	cmd := exec.Command("git", "remote", "add", "dokku", "dokku@localhost:" + app)
+	log.Println("Adding repo dokku remote ", repoPath, app)
+	cmd := exec.Command("git", "remote", "add", "dokku", "/home/dokku/" + app)
 	cmd.Dir = repoPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -130,7 +131,7 @@ func addRepoDokkuRemote(repoPath string, app string) (error) {
 }
 
 func fetchRepo(repoPath string) (error) {
-	fmt.Println("Fetchin repo ", repoPath)
+	log.Println("Fetchin repo ", repoPath)
 	cmd := exec.Command("git", "fetch", "origin", "--force", "--tags")
 	cmd.Dir = repoPath
 	cmd.Stdout = os.Stdout
@@ -140,16 +141,14 @@ func fetchRepo(repoPath string) (error) {
 }
 
 func deployToDokku(repoPath string, ref string) (*exec.Cmd) {
-	fmt.Println("Deploying repo ", repoPath)
-	cmd := exec.Command("bin/deploy-stub")
-	// cmd := exec.Command("git", "push", "-f", "dokku", ref + ":master")
-	// cmd.Dir = repoPath
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
+	log.Println("Deploying repo ", repoPath)
+	cmd := exec.Command("git", "push", "-f", "dokku", ref + ":master")
+	cmd.Dir = repoPath
 	return cmd
 }
 
 func getDeployment(ctx context.Context, client *github.Client, org string, repo string, env string) (*github.Deployment, *github.Response, error) {
+	log.Println("Getting deployment ", env)
 	opt := &github.DeploymentsListOptions{
 		Environment: env,
 		ListOptions: github.ListOptions{PerPage: 1},
@@ -162,21 +161,21 @@ func getDeployment(ctx context.Context, client *github.Client, org string, repo 
 		return deployment, resp, err
 	}
 	
-	// statuses, resp, err := client.Repositories.ListDeploymentStatuses(ctx, org, repo, *deployment.ID, &github.ListOptions{ PerPage: 1 })
-	// if err != nil {
-	// 	return deployment, resp, err
-	// }
-	// 
-	// if len(statuses) > 0 {
-	// 	err := errors.New("Deployment statuses already present")
-	// 	return deployment, resp, err
-	// }
+	statuses, resp, err := client.Repositories.ListDeploymentStatuses(ctx, org, repo, *deployment.ID, &github.ListOptions{ PerPage: 1 })
+	if err != nil {
+		return deployment, resp, err
+	}
+	
+	if len(statuses) > 0 {
+		err := errors.New("Deployment statuses already present")
+		return deployment, resp, err
+	}
 
 	return deployment, resp, err
 }
 
 func createDeploymentStatus(ctx context.Context, client *github.Client, deployment *github.Deployment, org string, repo string, state string, url string) (*github.DeploymentStatus, *github.Response, error) {
-	fmt.Println("Deployment status create ", state)
+	log.Println("Deployment status create ", state)
 	input := &github.DeploymentStatusRequest{
 		State: github.String(state),
 		LogURL: github.String(url),
@@ -186,8 +185,8 @@ func createDeploymentStatus(ctx context.Context, client *github.Client, deployme
 }
 
 func createDeploymentGist(ctx context.Context, client *github.Client, deployment *github.Deployment) (*github.Gist, *github.Response, error) {
-	fmt.Println("Gist create")
 	title := fmt.Sprintf("ID: %d, Ref: %s, Environment: %s", *deployment.ID, *deployment.Ref, *deployment.Environment)
+	log.Println("Gist create", title)
 	input := &github.Gist{
 		Description: github.String(title),
 		Public: github.Bool(false),
@@ -200,7 +199,7 @@ func createDeploymentGist(ctx context.Context, client *github.Client, deployment
 }
 
 func updateDeploymentGist(ctx context.Context, client *github.Client, gist *github.Gist, content string) (*github.Gist, *github.Response, error) {
-	fmt.Println("Gist update")
+	log.Println("Gist update")
 	file := gist.Files["output.txt"]
 	file.Content = github.String(content)
 	gist.Files["output.txt"] = file

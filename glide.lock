@@ -1,8 +1,6 @@
-hash: f13fd506400e65c2a2dcfdd653c0684b6875c65ebc9997d2ea9e9c9d7cedda1c
-updated: 2017-08-23T15:50:01.447463411+03:00
+hash: a9efce76fa2c49b3fec13972e3841ca9806cc05757afacc439364cce682dfa3c
+updated: 2017-08-24T10:07:14.9269699Z
 imports:
-- name: github.com/denisenkom/go-mssqldb
-  version: 9e40d9d5d325edfaa84d3374bfde6e1adce02d58
 - name: github.com/google/go-github
   version: 78072f320213a7e011b5fb2700bcb9eb90efec37
   subpackages:
@@ -11,6 +9,4 @@ imports:
   version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
   subpackages:
   - query
-- name: github.com/lib/pq
-  version: 67c3f2a8884c9b1aac5503c8d42ae4f73a93511c
 testImports: []

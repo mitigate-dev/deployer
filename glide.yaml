@@ -1,7 +1,5 @@
 package: .
 import:
-- package: github.com/denisenkom/go-mssqldb
-- package: github.com/lib/pq
 - package: github.com/google/go-github
   subpackages:
   - github
