@@ -67,7 +67,7 @@ Sleep duration: 30s
 2017/08/24 13:32:53 Problem in getting deployment Deployment statuses already present
 2017/08/24 13:32:53 Sleeping 30s
 2017/08/24 13:33:23 Getting deployment  demo
-2017/08/24 13:33:23 123 master demo
+2017/08/24 13:33:23 123 v49.3 demo
 2017/08/24 13:33:23 Fetchin repo  .myapp-demo
 2017/08/24 13:33:24 Gist create ID: 123, Ref: v49.3, Environment: demo
 2017/08/24 13:33:25 Gist https://gist.github.com/...
