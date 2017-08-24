@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+echo '-----> Adding BUILD_ENV to build environment...'
+echo '-----> Compiling Ruby/Rails'
+sleep 2
+echo '=====> Application deployed:'
+echo '       http://ruby-rails-sample.dokku.me'
+
+exit 0
