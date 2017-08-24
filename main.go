@@ -154,12 +154,15 @@ func getDeployment(ctx context.Context, client *github.Client, org string, repo 
 		ListOptions: github.ListOptions{PerPage: 1},
 	}
 	deployments, resp, err := client.Repositories.ListDeployments(ctx, org, repo, opt)
-	deployment := deployments[0]
-
-	if deployment == nil {
-		err := errors.New("Deployment list is empty")
-		return deployment, resp, err
+	if err != nil {
+		return nil, resp, err
 	}
+
+	if len(deployments) == 0 {
+		err := errors.New("Deployment list is empty")
+		return nil, resp, err
+	}
+	deployment := deployments[0]
 	
 	statuses, resp, err := client.Repositories.ListDeploymentStatuses(ctx, org, repo, *deployment.ID, &github.ListOptions{ PerPage: 1 })
 	if err != nil {
