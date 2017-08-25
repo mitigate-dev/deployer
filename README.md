@@ -54,8 +54,7 @@ Start `deployer` on system reboot using `cron` and `screen`:
 
 ```bash
 $ su - dokku
-$ echo "@reboot /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30
-" | crontab -
+$ echo "@reboot /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30" | crontab -
 ```
 
 Start `deployer` in `screen`:
@@ -108,3 +107,11 @@ Everything up-to-date
 ```bash
 make
 ```
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/mak-it/deployer. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+
+## License
+
+Deployer is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
