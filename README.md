@@ -1,6 +1,6 @@
 # Deployer
 
-Deploy [dokku](http://dokku.viewdocs.io/dokku/) applications using [GitHub Deployments](https://developer.github.com/v3/repos/deployments/).
+Deploy [dokku](http://dokku.viewdocs.io/dokku/) applications using [GitHub Deployments API](https://developer.github.com/v3/repos/deployments/).
 
 1. Listen/poll new GitHub deployments
 2. Create pending GitHub deployment status and empty Gist
@@ -38,6 +38,31 @@ deployer -h
     	Time to sleep between loops (defaults to 30 seconds) (default 30)
   -u string
     	GitHub username (required)
+```
+
+## Installation
+
+Install `deployer` on dokku server:
+
+```bash
+$ su - dokku
+$ curl -L -o deployer https://github.com/mak-it/deployer/releases/download/v0.1.1/deployer-linux-amd64
+$ chmod +x deployer
+```
+
+Start `deployer` on system reboot using `cron` and `screen`:
+
+```bash
+$ su - dokku
+$ echo "@reboot /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30
+" | crontab -
+```
+
+Start `deployer` in `screen`:
+
+```bash
+$ su - dokku
+$ /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30
 ```
 
 ## Example
