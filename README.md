@@ -46,7 +46,7 @@ Install `deployer` on dokku server:
 
 ```bash
 $ su - dokku
-$ curl -L -o deployer https://github.com/mak-it/deployer/releases/download/v0.1.1/deployer-linux-amd64
+$ curl -L -o deployer https://github.com/mak-it/deployer/releases/download/v0.1.2/deployer-linux-amd64
 $ chmod +x deployer
 ```
 
