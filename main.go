@@ -10,6 +10,7 @@ import "errors"
 import "bytes"
 import "io"
 import "log"
+import "regexp"
 import "github.com/google/go-github/github"
 
 func main() {
@@ -137,6 +138,14 @@ func fetchRepo(repoPath string) (error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	cmd = exec.Command("git", "reset", "--hard", "origin/HEAD")
+	cmd.Dir = repoPath
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
 	return err
 }
 
@@ -144,6 +153,7 @@ func deployToDokku(repoPath string, ref string) (*exec.Cmd) {
 	log.Println("Deploying repo ", repoPath)
 	cmd := exec.Command("git", "push", "-f", "dokku", ref + ":master")
 	cmd.Dir = repoPath
+	// cmd := exec.Command("bin/deploy-stub")
 	return cmd
 }
 
@@ -203,6 +213,11 @@ func createDeploymentGist(ctx context.Context, client *github.Client, deployment
 
 func updateDeploymentGist(ctx context.Context, client *github.Client, gist *github.Gist, content string) (*github.Gist, *github.Response, error) {
 	log.Println("Gist update")
+
+	// Remove Terminal Escape codes - "remote:\e[1G"
+	re := regexp.MustCompile(".*\x1b\\[1G")
+	content = re.ReplaceAllString(content, "")
+
 	file := gist.Files["output.txt"]
 	file.Content = github.String(content)
 	gist.Files["output.txt"] = file

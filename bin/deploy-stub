@@ -1,10 +1,10 @@
 #!/bin/bash
 
 
-echo '-----> Adding BUILD_ENV to build environment...'
-echo '-----> Compiling Ruby/Rails'
+echo $'remote: \e[1G-----> Adding BUILD_ENV to build environment...'
+echo $'remote: \e[1G-----> Compiling Ruby/Rails'
 sleep 2
-echo '=====> Application deployed:'
-echo '       http://ruby-rails-sample.dokku.me'
+echo $'remote: \e[1G=====> Application deployed:'
+echo $'remote: \e[1G       http://ruby-rails-sample.dokku.me'
 
 exit 0
