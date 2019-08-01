@@ -44,7 +44,7 @@ Install `deployer` on application server:
 
 ```bash
 $ sudo -i
-$ curl -L -o /usr/local/bin/deployer https://github.com/mak-it/deployer/releases/download/v0.1.3/deployer-linux-amd64
+$ curl -L -o /usr/local/bin/deployer https://github.com/mak-it/deployer/releases/download/v0.2.0/deployer-linux-amd64
 $ chmod +x /usr/local/bin/deployer
 ```
 
