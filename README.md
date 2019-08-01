@@ -38,6 +38,30 @@ deployer -h
       GitHub username (required)
 ```
 
+## Installation
+
+Install `deployer` on application server:
+
+```bash
+$ sudo -i
+$ curl -L -o /usr/local/bin/deployer https://github.com/mak-it/deployer/releases/download/v0.1.3/deployer-linux-amd64
+$ chmod +x /usr/local/bin/deployer
+```
+
+Start `deployer` on system reboot using `cron` and `screen` (assuming you already have a custom deployment script `/home/deployuser/deploy-myapp-demo`):
+
+```bash
+$ su - deployuser
+$ echo "@reboot /usr/bin/screen -d -m /usr/local/bin/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -file /home/deployuser/deploy-myapp-demo -sleep 30" | crontab -
+```
+
+Start `deployer` in `screen`:
+
+```bash
+$ su - deployuser
+$ /usr/bin/screen -d -m /usr/local/bin/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -file /home/deployuser/deploy-myapp-demo -sleep 30
+ ```
+
 ## Example
 
 Trigger deployment from developer's machine:
