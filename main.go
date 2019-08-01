@@ -68,7 +68,7 @@ func main() {
 		createDeploymentStatus(ctx, client, deployment, *org, *repo, "pending", *gist.HTMLURL)
 
 		var output bytes.Buffer
-		cmd := executeFile(*file)
+		cmd := executeFile(*file, *deployment.Ref)
 		cmd.Stdout = io.MultiWriter(&output, os.Stdout)
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Run()
@@ -92,10 +92,10 @@ func sleep(duration time.Duration) {
 	time.Sleep(duration)
 }
 
-func executeFile(filePath string) *exec.Cmd {
+func executeFile(filePath string, ref string) *exec.Cmd {
 	log.Println("Executing File", filePath)
-	cmd := exec.Command(filePath)
-	// cmd := exec.Command("bin/deploy-stub")
+	cmd := exec.Command(filePath, ref)
+	// cmd := exec.Command("bin/deploy-stub", ref)
 	return cmd
 }
 

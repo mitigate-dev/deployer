@@ -1,6 +1,8 @@
 #!/bin/bash
 
+VERSION=$1
 
+echo $'remote: \e[1G-----> Deploying version: '$VERSION'...'
 echo $'remote: \e[1G-----> Adding BUILD_ENV to build environment...'
 echo $'remote: \e[1G-----> Compiling Ruby/Rails'
 sleep 2
