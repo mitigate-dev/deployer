@@ -1,17 +1,15 @@
 # Deployer
 
-Deploy [dokku](http://dokku.viewdocs.io/dokku/) applications using [GitHub Deployments API](https://developer.github.com/v3/repos/deployments/).
+Deploy applications using [GitHub Deployments API](https://developer.github.com/v3/repos/deployments/).
 
 1. Listen/poll new GitHub deployments
 2. Create pending GitHub deployment status and empty Gist
-3. Deploy application to dokku
+3. Execute command file that deploys application
 4. Create success/failure Github deployment status and update Gist
 5. Sleep 30 seconds
 6. Go to step #1
 
-Make sure to run `deployer` as `dokku` user.
-
-To register github deployments you can use [deploy](https://github.com/remind101/deploy),
+To register github deployments you can use curl,
 [slashdeploy](https://github.com/remind101/slashdeploy) or something else.
 
 If you are using Slack, you can enable 'Deploy Events -> Show deployment statuses'
@@ -24,44 +22,20 @@ deployer -h
 ```
 
 ```
-  -app string
-    	Dokku application name (required)
   -env string
-    	Github deployment environment (required)
+      Github deployment environment (required)
+  -file string
+      File to execute when new deployment is available (required)
   -org string
-    	GitHub org (required)
+      GitHub org (required)
   -p string
-    	GitHub password (required)
+      GitHub password (required)
   -repo string
-    	GitHub repo (required)
+      GitHub repo (required)
   -sleep int
-    	Time to sleep between loops (defaults to 30 seconds) (default 30)
+      Time to sleep between loops (defaults to 30 seconds) (default 30)
   -u string
-    	GitHub username (required)
-```
-
-## Installation
-
-Install `deployer` on dokku server:
-
-```bash
-$ su - dokku
-$ curl -L -o deployer https://github.com/mak-it/deployer/releases/download/v0.1.2/deployer-linux-amd64
-$ chmod +x deployer
-```
-
-Start `deployer` on system reboot using `cron` and `screen`:
-
-```bash
-$ su - dokku
-$ echo "@reboot /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30" | crontab -
-```
-
-Start `deployer` in `screen`:
-
-```bash
-$ su - dokku
-$ /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30
+      GitHub username (required)
 ```
 
 ## Example
@@ -69,14 +43,13 @@ $ /usr/bin/screen -d -m /home/dokku/deployer -u ghuser -p ghpass -org mak-it -re
 Trigger deployment from developer's machine:
 
 ```bash
-$ cd ~/src/myapp
 $ deploy --branch v49.3 --env demo
 ```
 
-On the dokku server:
+On the application server:
 
 ```bash
-$ deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -app myapp-demo -sleep 30
+$ deployer -u ghuser -p ghpass -org mak-it -repo myapp -env demo -file bin/deploy-stub -sleep 30
 ```
 
 Output:
@@ -85,19 +58,20 @@ Output:
 Deployer
 ghuser ghpass mak-it myapp demo myapp-demo
 Sleep duration: 30s
-2017/08/24 13:31:43 Cloning repo  
-2017/08/24 13:31:51 Adding repo dokku remote  .myapp-demo myapp-demo
 2017/08/24 13:32:52 Getting deployment  demo
 2017/08/24 13:32:53 Problem in getting deployment Deployment statuses already present
 2017/08/24 13:32:53 Sleeping 30s
 2017/08/24 13:33:23 Getting deployment  demo
 2017/08/24 13:33:23 123 v49.3 demo
-2017/08/24 13:33:23 Fetchin repo  .myapp-demo
 2017/08/24 13:33:24 Gist create ID: 123, Ref: v49.3, Environment: demo
 2017/08/24 13:33:25 Gist https://gist.github.com/...
 2017/08/24 13:33:25 Deployment status create  pending
-2017/08/24 13:33:26 Deploying repo  .myapp-demo
-Everything up-to-date
+2017/08/24 13:33:26 Executing File bin/deploy-stub
+-----> Deploying version: v49.3...
+-----> Adding BUILD_ENV to build environment...
+-----> Compiling Ruby/Rails
+=====> Application deployed:
+       http://ruby-rails-sample.dokku.me
 2017/08/24 13:33:26 Deployment status create  success
 2017/08/24 13:33:26 Gist update
 ```

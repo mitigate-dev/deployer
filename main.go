@@ -16,38 +16,25 @@ import "github.com/google/go-github/github"
 func main() {
 	fmt.Println("Deployer")
 
-	username := flag.String("u",    "",  "GitHub username (required)")
-	password := flag.String("p",    "",  "GitHub password (required)")
-	org      := flag.String("org",  "",  "GitHub org (required)")
-	repo     := flag.String("repo", "",  "GitHub repo (required)")
-	env      := flag.String("env",  "",  "Github deployment environment (required)")
-	app      := flag.String("app",  "",  "Dokku application name (required)")
-	sleepInt := flag.Int(   "sleep", 30, "Time to sleep between loops (defaults to 30 seconds)")
+	username := flag.String("u",    "", "GitHub username (required)")
+	password := flag.String("p",    "", "GitHub password (required)")
+	org      := flag.String("org",  "", "GitHub org (required)")
+	repo     := flag.String("repo", "", "GitHub repo (required)")
+	env      := flag.String("env",  "", "Github deployment environment (required)")
+	file     := flag.String("file", "", "File to execute when new deployment is available (required)")
+	sleepInt := flag.Int(  "sleep", 30, "Time to sleep between loops (defaults to 30 seconds)")
 
 	flag.Parse()
 
-	if *app == "" {
+	if *username == "" || *password == "" || *org == "" || *repo == "" || *env == "" || *file == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	fmt.Println(*username, *password, *org, *repo, *env, *app)
+	fmt.Println(*username, *password, *org, *repo, *env, *file)
 
 	sleepDuration := time.Duration(*sleepInt) * time.Second
 	fmt.Printf("Sleep duration: %v\n", sleepDuration)
-
-	repoPath := "." + *app;
-	_, err := os.Stat(repoPath)
-	if err != nil {
-		repoURL := "https://" + *username + ":" + *password + "@github.com/" + *org + "/" + *repo + ".git"
-		err = cloneRepo(repoURL, repoPath)
-		if err != nil {
-			log.Printf("Problem cloning repo %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	addRepoDokkuRemote(repoPath, *app)
 
 	ctx := context.Background()
 	tp := github.BasicAuthTransport{
@@ -68,13 +55,6 @@ func main() {
 
 		log.Println(*deployment.ID, *deployment.Ref, *deployment.Environment)
 
-		err = fetchRepo(repoPath)
-		if err != nil {
-			log.Printf("Problem in fetching repo %v\n", err)
-			sleep(sleepDuration)
-			continue
-		}
-
 		gist, _, err := createDeploymentGist(ctx, client, deployment)
 
 		if err != nil {
@@ -88,12 +68,12 @@ func main() {
 		createDeploymentStatus(ctx, client, deployment, *org, *repo, "pending", *gist.HTMLURL)
 
 		var output bytes.Buffer
-		cmd := deployToDokku(repoPath, *deployment.Ref)
+		cmd := executeFile(*file, *deployment.Ref)
 		cmd.Stdout = io.MultiWriter(&output, os.Stdout)
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Run()
 		if err != nil {
-			log.Printf("Problem in deploying to dokku %v\n", err)
+			log.Printf("Problem with file execution %v\n", err)
 			createDeploymentStatus(ctx, client, deployment, *org, *repo, "error", *gist.HTMLURL)
 			updateDeploymentGist(ctx, client, gist, output.String())
 			sleep(sleepDuration)
@@ -112,48 +92,10 @@ func sleep(duration time.Duration) {
 	time.Sleep(duration)
 }
 
-func cloneRepo(repoURL string, repoPath string) (error) {
-	log.Println("Cloning repo ", repoURL)
-	cmd := exec.Command("git", "clone", repoURL, repoPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	return err
-}
-
-func addRepoDokkuRemote(repoPath string, app string) (error) {
-	log.Println("Adding repo dokku remote ", repoPath, app)
-	cmd := exec.Command("git", "remote", "add", "dokku", "/home/dokku/" + app)
-	cmd.Dir = repoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	return err
-}
-
-func fetchRepo(repoPath string) (error) {
-	log.Println("Fetchin repo ", repoPath)
-	cmd := exec.Command("git", "fetch", "origin", "--force", "--tags")
-	cmd.Dir = repoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	cmd = exec.Command("git", "reset", "--hard", "origin/HEAD")
-	cmd.Dir = repoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	return err
-}
-
-func deployToDokku(repoPath string, ref string) (*exec.Cmd) {
-	log.Println("Deploying repo ", repoPath)
-	cmd := exec.Command("git", "push", "-f", "dokku", ref + ":master")
-	cmd.Dir = repoPath
-	// cmd := exec.Command("bin/deploy-stub")
+func executeFile(filePath string, ref string) *exec.Cmd {
+	log.Println("Executing File", filePath)
+	cmd := exec.Command(filePath, ref)
+	// cmd := exec.Command("bin/deploy-stub", ref)
 	return cmd
 }
 
@@ -173,12 +115,12 @@ func getDeployment(ctx context.Context, client *github.Client, org string, repo 
 		return nil, resp, err
 	}
 	deployment := deployments[0]
-	
+
 	statuses, resp, err := client.Repositories.ListDeploymentStatuses(ctx, org, repo, *deployment.ID, &github.ListOptions{ PerPage: 1 })
 	if err != nil {
 		return deployment, resp, err
 	}
-	
+
 	if len(statuses) > 0 {
 		err := errors.New("Deployment statuses already present")
 		return deployment, resp, err
